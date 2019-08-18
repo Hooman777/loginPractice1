@@ -1,7 +1,7 @@
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
 
-let db = new sqlite3.Database(path.join(__dirname, "database", "users.db"));
+let db = new sqlite3.Database(path.join(__dirname, "database", "db.sqlite"));
 
 exports.initialize = () => {
   db.run(
@@ -16,23 +16,29 @@ exports.initialize = () => {
   });
 };
 
-exports.addUser = (id, email) => {
+exports.addUser = (name, email, hash) => {
   db.run(`
-  INSERT INTO users (Id, Name, Email, Password) VALUES (?, ?, ?, ?);  
-  `, [id, "Hooman", email, "734"], error => {
+  INSERT INTO User (Name, Email, Password) VALUES (?, ?, ?);  
+  `, [name, email, hash], error => {
     if (error) {
       return console.error(error.message);
     }
   });
 };
 
-exports.retrieveUser = (email) => {
+exports.retrieveUser = (hash, email, callback) => {
   db.get(`
-  SELECT (Id, Name, Email, Password) FROM users WHERE Email = ?;
-  `, [email], (error, row) => {
+  SELECT Id, Name, Email, Password FROM User WHERE Email = ? AND Password = ?;
+  `, [email, hash], (error, row) => {
     if (error) {
+        callback(false);
       return console.error(error.message);
     }
-    return row;
+
+    if (row) {
+        callback(true, row);
+    } else {
+        callback(false);
+    }
   });
 };
